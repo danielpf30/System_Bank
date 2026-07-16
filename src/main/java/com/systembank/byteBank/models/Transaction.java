@@ -17,8 +17,8 @@ public class Transaction {
         this.dateTime = LocalDateTime.now();
     }
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "id", updatable = false, nullable = false)
+    @GeneratedValue
+    @Column(name = "id", updatable = false, nullable = false, insertable = false)
     private UUID id;
 
     @Column(name = "valor", nullable = false, precision = 15, scale = 2)
