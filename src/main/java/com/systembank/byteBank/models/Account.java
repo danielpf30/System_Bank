@@ -36,4 +36,22 @@ public class Account {
     @Enumerated(EnumType.STRING)
     @Column(name = "tipo", nullable = false)
     private AccountType accountType;
+
+    public void Withdraw(BigDecimal amount) {
+        if (amount.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new  IllegalArgumentException("The value must be greater than zero");
+        }
+        if (this.balance.compareTo(amount) < 0) {
+            throw new IllegalStateException("The balance must be greater than zero");
+        }
+        this.balance = this.balance.subtract(amount);
+
+    }
+
+    public void Deposit(BigDecimal amount) {
+        if (amount.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new  IllegalArgumentException("The value must be greater than zero");
+        }
+        this.balance = balance.add(amount);
+    }
 }
