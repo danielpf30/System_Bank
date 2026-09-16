@@ -3,6 +3,8 @@ package com.systembank.byteBank.models;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
+
+import java.time.LocalDate;
 import java.util.UUID;
 
 @Getter
@@ -29,5 +31,5 @@ public class User {
     private String cpf;
 
     @Column(name = "idade", nullable = false)
-    private int age;
+    private LocalDate birthDate;
 }
