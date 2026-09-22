@@ -1,35 +1,44 @@
 package com.systembank.byteBank.service;
 
 import com.systembank.byteBank.DTOs.UserRequestDTO;
+import com.systembank.byteBank.DTOs.UserResponseDTO;
 import com.systembank.byteBank.DTOs.UserUpdateDTO;
 import com.systembank.byteBank.exception.BusinessRuleException;
 import com.systembank.byteBank.models.User;
 import com.systembank.byteBank.repository.UserRepository;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-import java.util.Optional;
+import java.util.List;
 import java.util.UUID;
+import static com.systembank.byteBank.DTOs.UserResponseDTO.fromEntity;
 
 @Service
 public class UserService {
 
-    private UserRepository userRepository;
+    private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
 
-    public UserService(UserRepository userRepository) {
+    public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder) {
         this.userRepository = userRepository;
+        this.passwordEncoder = passwordEncoder;
     }
 
-    public void register(UserRequestDTO dto) {
-       userRepository.save(dto.toEntity());
-    }
-
-    public User update(User user) {
-        if (userRepository.findById(user.getId()).isPresent()) {
-            return userRepository.save(user);
+    public UserResponseDTO register(UserRequestDTO dto) {
+        if (userRepository.existsByEmail(dto.email())) {
+            throw new BusinessRuleException("Este email ja existe");
         }
-        throw new BusinessRuleException("Usuario nao encontrado");
+        if (userRepository.existsByCpf(dto.cpf())) {
+            throw new BusinessRuleException("Este CPF ja existe");
+        }
+        User userSave = dto.toEntity();
+        String hash = passwordEncoder.encode(dto.password());
+        userSave.setPassword(hash);
+
+        User savedUser = userRepository.save(userSave);
+        return fromEntity(savedUser);
     }
 
-    public User updatePartial(UUID id, UserUpdateDTO dto) {
+    public UserResponseDTO update(UUID id, UserUpdateDTO dto) {
        User existingUser = userRepository.findById(id)
                .orElseThrow(() -> new BusinessRuleException("Usuario nao encontrado"));
 
@@ -42,10 +51,28 @@ public class UserService {
            }
            existingUser.setEmail(dto.email());
        }
-       return userRepository.save(existingUser);
+       User savedUser = userRepository.save(existingUser);
+       return fromEntity(savedUser);
 
     }
-    public Optional<User> getUserFindByCpf(String cpf) {
-        return userRepository.findByCpf(cpf);
+
+    public void delete(UUID id) {
+        User existingUser = userRepository.findById(id)
+                .orElseThrow(() -> new BusinessRuleException("Usuario nao encontrado"));
+        userRepository.delete(existingUser);
+    }
+
+    public List<UserResponseDTO> findAll() {
+       List<User> list = userRepository.findAll();
+       return list.stream().map(UserResponseDTO::fromEntity).toList();
+    }
+
+    public UserResponseDTO getUserFindByCpf(String cpf) {
+        User user = userRepository.findByCpf(cpf).orElseThrow(() -> new BusinessRuleException("Usuario nao encontrado"));
+        return UserResponseDTO.fromEntity(user);
+    }
+    public UserResponseDTO getUserFindById(UUID id) {
+        User user = userRepository.findById(id).orElseThrow(() -> new BusinessRuleException("Usuario nao encontrado"));
+        return UserResponseDTO.fromEntity(user);
     }
 }
